@@ -3,8 +3,6 @@ services:
     name: laravel-banmypham
     env: docker
     plan: free
-    buildCommand: ""
-    startCommand: ""
     envVars:
       - key: APP_ENV
         value: production
