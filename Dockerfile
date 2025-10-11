@@ -1,52 +1,51 @@
-# ===============================
-# 🐘 Build Laravel on PHP 8.2 + Apache
-# ===============================
+# =========================================================
+# 🧱 STAGE 1: Composer dependencies
+# =========================================================
+FROM composer:2.6 AS vendor
 
-# Base image
+WORKDIR /app
+COPY composer.json composer.lock ./
+
+# Giữ cache để lần sau build nhanh hơn
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+# =========================================================
+# 🧱 STAGE 2: PHP + Apache + Laravel setup
+# =========================================================
 FROM php:8.2-apache
 
-# Install system dependencies
+# Cài các extension PHP cần cho Laravel + MoMo
 RUN apt-get update && apt-get install -y \
-    git zip unzip curl libpng-dev libjpeg-dev libfreetype6-dev \
-    libonig-dev libxml2-dev libzip-dev \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+    git zip unzip curl libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# Copy composer dependencies từ stage 1
+COPY --from=vendor /app/vendor /var/www/html/vendor
 
-# Set working directory
+# Copy toàn bộ project Laravel
 WORKDIR /var/www/html
-
-# Copy composer binary from official composer image
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Copy project files into container
 COPY . .
 
-# Install dependencies without dev packages
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+# Tạo storage và bootstrap/cache (nếu chưa có)
+RUN mkdir -p storage bootstrap/cache
 
-# Copy the default environment if missing
-RUN if [ ! -f .env ]; then cp .env.example .env; fi
+# Phân quyền
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Generate Laravel APP_KEY
-RUN php artisan key:generate --force
+# Bật Apache mod_rewrite cho Laravel routes
+RUN a2enmod rewrite
 
-# Set permissions for Laravel
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
-RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Chỉnh VirtualHost để đọc biến PORT do Render cung cấp
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf
 
-# Expose port 80
-EXPOSE 80
+# Expose port cho Render / Koyeb
+EXPOSE 10000
 
-# Configure Apache to serve the /public directory
-RUN echo '<VirtualHost *:80>\n\
-    DocumentRoot /var/www/html/public\n\
-    <Directory /var/www/html/public>\n\
-        AllowOverride All\n\
-        Require all granted\n\
-    </Directory>\n\
-</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
-
-# Start Apache
-CMD ["apache2-foreground"]
+# Tự động optimize + migrate khi container khởi động
+CMD php artisan key:generate --force && \
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
+    php artisan migrate --force || true && \
+    apache2-foreground
