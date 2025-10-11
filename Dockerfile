@@ -12,19 +12,22 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Làm việc trong thư mục app
 WORKDIR /var/www/html
 
-# Copy toàn bộ source
+# Copy toàn bộ source code
 COPY . .
+
+# Tạo file .env nếu chưa có
+RUN cp .env.example .env
 
 # Cấp quyền cho Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Cài dependencies (chỉ build, chưa chạy artisan)
+# Cài dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Expose port 8080
 EXPOSE 8080
 
-# Khi container chạy, mới chạy artisan setup
+# Khi container khởi động, mới chạy artisan setup
 CMD php artisan key:generate --force && \
     php artisan migrate --force && \
     php artisan config:cache && \
