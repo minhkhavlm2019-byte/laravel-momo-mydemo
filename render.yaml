@@ -1,7 +1,7 @@
 services:
   - type: web
     name: laravel-banmypham
-    env: php
+    runtime: php
     plan: free
     buildCommand: |
       composer install --no-dev --optimize-autoloader
