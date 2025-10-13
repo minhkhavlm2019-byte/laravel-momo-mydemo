@@ -8,9 +8,14 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('don_hangs', function (Blueprint $table) {
             $table->id('DonHangID');
-            $table->foreignId('UserID')
-                  ->constrained('nguoi_dungs')
+
+            // 🔹 Khóa ngoại tới bảng nguoi_dungs
+            $table->unsignedBigInteger('UserID');
+            $table->foreign('UserID')
+                  ->references('UserID')
+                  ->on('nguoi_dungs')
                   ->onDelete('cascade');
+
             $table->timestamp('NgayDat')->useCurrent();
             $table->decimal('TongTien', 12, 2)->default(0);
             $table->string('PhuongThucThanhToan', 50)->nullable();

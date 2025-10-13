@@ -7,13 +7,19 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void {
         Schema::create('chi_tiet_don_hangs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('DonHangID')
-                  ->constrained('don_hangs')
+            $table->id('ChiTietID'); // đặt tên khóa chính rõ ràng
+            $table->unsignedBigInteger('DonHangID');
+            $table->foreign('DonHangID')
+                  ->references('DonHangID')
+                  ->on('don_hangs')
                   ->onDelete('cascade');
-            $table->foreignId('SanPhamID')
-                  ->constrained('san_phams')
+
+            $table->unsignedBigInteger('SanPhamID');
+            $table->foreign('SanPhamID')
+                  ->references('SanPhamID')
+                  ->on('san_phams')
                   ->onDelete('cascade');
+
             $table->integer('SoLuong')->default(1);
             $table->decimal('GiaLucMua', 10, 2);
             $table->timestamps();
@@ -24,4 +30,3 @@ return new class extends Migration {
         Schema::dropIfExists('chi_tiet_don_hangs');
     }
 };
-
