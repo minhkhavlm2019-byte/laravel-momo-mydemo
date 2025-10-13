@@ -12,12 +12,21 @@ return new class extends Migration {
             $table->text('MoTa')->nullable();
             $table->decimal('Gia', 10, 2);
             $table->integer('SoLuongTon')->default(0);
-            $table->foreignId('ThuongHieuID')
-                  ->constrained('thuong_hieus')
+
+            // 🔹 Khóa ngoại đến bảng thuong_hieus
+            $table->unsignedBigInteger('ThuongHieuID');
+            $table->foreign('ThuongHieuID')
+                  ->references('ThuongHieuID')
+                  ->on('thuong_hieus')
                   ->onDelete('cascade');
-            $table->foreignId('LoaiID')
-                  ->constrained('loai_san_phams')
+
+            // 🔹 Khóa ngoại đến bảng loai_san_phams
+            $table->unsignedBigInteger('LoaiID');
+            $table->foreign('LoaiID')
+                  ->references('LoaiID')
+                  ->on('loai_san_phams')
                   ->onDelete('cascade');
+
             $table->string('HinhAnh')->nullable();
             $table->date('NgayNhap')->nullable();
             $table->boolean('TrangThai')->default(true);
