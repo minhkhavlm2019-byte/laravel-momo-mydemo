@@ -13,7 +13,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# --- Copy file .env.example sang .env nếu chưa có ---
+# --- Copy .env.example làm mẫu (Render sẽ override bằng .env thật) ---
 RUN cp .env.example .env
 
 # --- Phân quyền cho storage & cache ---
@@ -23,35 +23,18 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 # --- Cài đặt dependencies ---
 RUN composer install --no-dev --optimize-autoloader
 
-# --- Laravel optimize ---
-RUN php artisan config:clear \
-    && php artisan key:generate --force \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
 # --- Render dùng port 8080 ---
 ENV PORT=8080
 EXPOSE 8080
 
-# --- Laravel setup ---
-RUN composer install --no-dev --optimize-autoloader
-
-# Chỉ cache khi deploy (không cache trong build)
-RUN php artisan config:clear \
-    && php artisan cache:clear \
-    && php artisan route:clear \
-    && php artisan view:clear
-
-# --- Permissions ---
-RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
-
-# --- Run app ---
+# --- Chạy app ---
 CMD php artisan config:clear \
     && php artisan cache:clear \
+    && php artisan route:clear \
+    && php artisan view:clear \
+    && php artisan key:generate --force \
+    && php artisan migrate --force \
     && php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache \
-    && php artisan serve --host=0.0.0.0 --port=8080
-
+    && php artisan serve --host=0.0.0.0 --port=$PORT
