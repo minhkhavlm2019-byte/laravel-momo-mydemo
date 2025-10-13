@@ -23,17 +23,11 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 # --- Cài đặt dependencies ---
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# --- Xoá cache để tránh dính cấu hình SQLite khi build ---
-RUN php artisan config:clear \
-    && php artisan cache:clear \
-    && php artisan route:clear \
-    && php artisan view:clear
-
 # --- Render port ---
 ENV PORT=8080
 EXPOSE 8080
 
-# --- Khi container khởi động, Laravel mới chạy artisan & migrate ---
+# --- Chạy ứng dụng ---
 CMD php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
