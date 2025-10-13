@@ -3,6 +3,7 @@ services:
     name: laravel-banmypham
     env: docker
     plan: free
+    autoDeploy: true
     envVars:
       - key: APP_ENV
         value: production
@@ -10,3 +11,45 @@ services:
         value: false
       - key: APP_URL
         value: https://laravel-banmypham.onrender.com
+      - key: PORT
+        value: 8080
+      - key: APP_KEY
+        sync: false          # Khóa Laravel, bạn đã set sẵn trên Dashboard
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: banmypham-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: banmypham-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: banmypham-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: banmypham-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: banmypham-db
+          property: password
+    # Render container sẽ khởi chạy Laravel server ở port 8080
+    dockerCommand: >
+      php artisan config:clear &&
+      php artisan cache:clear &&
+      php artisan route:clear &&
+      php artisan view:clear &&
+      php artisan key:generate --force &&
+      php artisan migrate --force &&
+      php artisan config:cache &&
+      php artisan route:cache &&
+      php artisan view:cache &&
+      php artisan serve --host=0.0.0.0 --port=$PORT
+
+databases:
+  - name: banmypham-db
+    plan: free
