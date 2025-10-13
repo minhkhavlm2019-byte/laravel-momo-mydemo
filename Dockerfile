@@ -1,7 +1,7 @@
 # --- Base image ---
 FROM php:8.2-apache
 
-# --- Cài các extension cần cho Laravel + PostgreSQL ---
+# --- Cài extension cho Laravel + PostgreSQL ---
 RUN apt-get update && apt-get install -y \
     git zip unzip libpq-dev libzip-dev \
     && docker-php-ext-install pdo pdo_pgsql pgsql
@@ -9,25 +9,31 @@ RUN apt-get update && apt-get install -y \
 # --- Cài Composer ---
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# --- Copy source code ---
+# --- Copy source ---
 WORKDIR /var/www/html
 COPY . .
 
-# --- Copy .env.example làm mẫu (Render sẽ override bằng .env thật) ---
-RUN cp .env.example .env
+# --- Copy .env.example nếu chưa có ---
+RUN cp .env.example .env || true
 
-# --- Phân quyền cho storage & cache ---
+# --- Phân quyền ---
 RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # --- Cài đặt dependencies ---
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# --- Render dùng port 8080 ---
+# --- Xoá cache để tránh dính cấu hình SQLite khi build ---
+RUN php artisan config:clear \
+    && php artisan cache:clear \
+    && php artisan route:clear \
+    && php artisan view:clear
+
+# --- Render port ---
 ENV PORT=8080
 EXPOSE 8080
 
-# --- Chạy app ---
+# --- Khi container khởi động, Laravel mới chạy artisan & migrate ---
 CMD php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
