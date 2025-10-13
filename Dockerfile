@@ -1,7 +1,7 @@
 # --- Base image ---
 FROM php:8.2-apache
 
-# --- Cài extension cho Laravel + PostgreSQL ---
+# --- Cài extension cần thiết ---
 RUN apt-get update && apt-get install -y \
     git zip unzip libpq-dev libzip-dev \
     && docker-php-ext-install pdo pdo_pgsql pgsql
@@ -23,18 +23,18 @@ RUN chown -R www-data:www-data storage bootstrap/cache \
 # --- Cài đặt dependencies ---
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# --- Render port ---
+# --- Port Render ---
 ENV PORT=8080
 EXPOSE 8080
 
-# --- Chạy ứng dụng ---
-CMD ["/bin/sh", "-c", "\
+# --- Dùng ENTRYPOINT thay vì CMD ---
+ENTRYPOINT ["/bin/sh", "-c", "\
 php artisan config:clear && \
 php artisan cache:clear && \
 php artisan route:clear && \
 php artisan view:clear && \
 php artisan key:generate --force && \
-php artisan migrate --force && \
+php artisan migrate --force || true && \
 php artisan config:cache && \
 php artisan route:cache && \
 php artisan view:cache && \

@@ -14,7 +14,7 @@ services:
       - key: PORT
         value: 8080
       - key: APP_KEY
-        sync: false          # Khóa Laravel, bạn đã set sẵn trên Dashboard
+        sync: false
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
@@ -37,18 +37,6 @@ services:
         fromDatabase:
           name: banmypham-db
           property: password
-    # Render container sẽ khởi chạy Laravel server ở port 8080
-    dockerCommand: >
-      php artisan config:clear &&
-      php artisan cache:clear &&
-      php artisan route:clear &&
-      php artisan view:clear &&
-      php artisan key:generate --force &&
-      php artisan migrate --force &&
-      php artisan config:cache &&
-      php artisan route:cache &&
-      php artisan view:cache &&
-      php artisan serve --host=0.0.0.0 --port=$PORT
 
 databases:
   - name: banmypham-db
