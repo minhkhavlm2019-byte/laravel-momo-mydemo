@@ -4,24 +4,22 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
+return new class extends Migration {
+    public function up(): void {
         Schema::create('don_hangs', function (Blueprint $table) {
-            $table->id();
+            $table->id('DonHangID');
+            $table->foreignId('UserID')
+                  ->constrained('nguoi_dungs')
+                  ->onDelete('cascade');
+            $table->timestamp('NgayDat')->useCurrent();
+            $table->decimal('TongTien', 12, 2)->default(0);
+            $table->string('PhuongThucThanhToan', 50)->nullable();
+            $table->string('TrangThai', 50)->default('Chờ xử lý');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
+    public function down(): void {
         Schema::dropIfExists('don_hangs');
     }
 };
